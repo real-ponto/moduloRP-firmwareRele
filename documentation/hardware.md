@@ -23,3 +23,20 @@ VCC   | 3V3
 
 conectar buton 0 do header j3 com o gnd
 
+# Usual Pin
+
+GPIO     | Funcionalidade
+---------|-----------
+GPIO00   | Button 1   
+GPIO01   | Serial RXD and Optional sensor  
+GPIO03   | Serial TXD and Optional sensor  
+GPIO05   | Relay 2  
+GPIO09   | Button 2
+GPIO10   | Button 3 
+GPIO12   | Relay 1
+GPIO13   | Blue Led   
+  
+Pino   | Funcionalidade
+-------|-----------
+12     | Green Led
+13     | Blue Led (inverted)
