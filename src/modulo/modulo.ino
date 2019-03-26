@@ -30,35 +30,28 @@ int counter = 0;
 
 int counterLessConnection = 0;
 
-bool beforeStateOnline = true;
-bool resetRelogioFlag = false;
+bool beforeStateOnline  = true;
+bool resetRelogioFlag   = false;
 bool shouldResetRelogio = false;
 
 // variaveis de tempo
-unsigned long timeNow           = 0;
 unsigned long timeLast          = 0;
 unsigned long timeConnected     = 0;   //total
 unsigned long timeDisconected   = 0; //total
-unsigned long mediaConnected    = 0;
-unsigned long mediaDisconnected = 0;
 
-unsigned long amostragemConnected   = 1;
-unsigned long amostragemDisconnect  = 0;
-
+unsigned int amostragemConnected   = 1;
+unsigned int amostragemDisconnect  = 0;
 
 void setup() {
 
   Serial.begin(115200);
 
-  Serial.println("realponto");
+  Serial.println("inicializate");
 
   pinMode(releRelogio, OUTPUT);
   pinMode(releModulo, OUTPUT);
 
   pinMode(ledAzul, OUTPUT);
-
-  digitalWrite(ledAzul, LOW);
-  delay(200);
 
   digitalWrite(releModulo, HIGH);
   digitalWrite(releRelogio, HIGH);
@@ -71,8 +64,10 @@ void setup() {
   Serial.println("try connect to wifi");
   
   while (WiFi.status() != WL_CONNECTED) {
+    
     digitalWrite(ledAzul, LOW);
     delay(100);    
+    
     digitalWrite(ledAzul, HIGH);
     delay(100);
     
@@ -100,17 +95,17 @@ void checkConnection() {
   
   if (online){
     
-    timeNow = millis()/60000;
+   
 
     if (beforeStateOnline){
-      timeConnected += timeNow - timeLast;
+      timeConnected += (millis()/60000) - timeLast;
     }
     
     else {
-      timeDisconected += timeNow - timeLast;
+      timeDisconected += (millis()/60000) - timeLast;
       amostragemConnected += 1;
     }
-    
+   
     timeLast = millis()/60000;
 
     
@@ -123,18 +118,16 @@ void checkConnection() {
   }
  
   else {
-    
-    timeNow = millis()/60000;
-    
+       
     if (beforeStateOnline){
-      timeConnected += timeNow - timeLast;
+      timeConnected += (millis()/60000) - timeLast;
       amostragemDisconnect += 1;
     }
     
     else {
-      timeDisconected += timeNow - timeLast;
+      timeDisconected += (millis()/60000) - timeLast;
     }
-    
+   
     timeLast = millis()/60000;
     
     beforeStateOnline = false;
@@ -189,20 +182,19 @@ void checkClientConected (int counter) {
   }
   
   Serial.print(".");
-  
+
   WiFiClient client = server.available();
 
   // se não tem cliente destrava o codigo
   if (!client) { 
     return; 
-    
    }
   
   Serial.println("");
   Serial.println("client connected");
 
   String request = client.readStringUntil('\r'); 
-  client.flush(); 
+ 
   Serial.println(request);
 
   if (request.indexOf("/resetRelogio") != -1)  { 
@@ -227,14 +219,12 @@ void checkClientConected (int counter) {
 
   } else if (request.indexOf("/getStatus") != -1)  { 
 
-    timeNow = millis()/60000;
-
     if (beforeStateOnline){
-      timeConnected += timeNow - timeLast;
+      timeConnected += (millis()/60000) - timeLast;
     }
     
     else {
-      timeDisconected += timeNow - timeLast;
+      timeDisconected += (millis()/60000) - timeLast;
       amostragemConnected += 1;
     }
     
@@ -242,9 +232,9 @@ void checkClientConected (int counter) {
 
     beforeStateOnline = true;
 
-    
+      
     Serial.print("workTime: ");
-    Serial.print(String(timeNow, DEC));
+    Serial.print(String((millis()/60000), DEC));
     Serial.println(" minutes.");
 
     client.println("HTTP/1.1 200 OK");
@@ -259,42 +249,27 @@ void checkClientConected (int counter) {
 
     delay(0);
     
-    response += "{\"Response\": ";
 
-    response += "{\"workTime\":";
-    response += String(timeNow, DEC);
-    response += "},";
+    client.print(String((millis()/60000), DEC));
+    client.print(";");
 
-    response += "{\"connectedTime\":";
-    response += String(timeConnected, DEC);
-    response += "},";
+    client.print(String(timeConnected, DEC));
+    client.print(";");
 
-    response += "{\"disconnectedTime\":";
-    response += String(timeDisconected, DEC);
-    response += "},";
-
-    response += "{\"mediaConnection\":";
-    response += String(timeConnected/amostragemConnected, DEC);
-    response += "},";
-
-    response += "{\"mediaDisconnection\":";
-    response += String(timeDisconected/amostragemDisconnect, DEC);
-    response += "},";
-
-    response += "{\"timesLossConnection\":";
-    response += String(amostragemDisconnect, DEC);
-    response += "},";
-
-    response += "}";
+    client.print(String(timeDisconected, DEC));
+    client.print(";");
     
-    client.println(response);
-    client.flush();
+    client.print(String(amostragemDisconnect, DEC));
+    client.print(";");
+    
+    client.println("");
+  
     
     delay(1); //INTERVALO DE 1 MILISSEGUNDO
   } 
-  else {
-    client.println("HTTP/1.1 404 Not Found");
-  }
+//  else {
+//    client.println("HTTP/1.1 404 Not Found");
+//  }
   
 }
 
@@ -317,6 +292,7 @@ void loop() {
 
   if (shouldResetRelogio){
     resetRelogio();
+    delay(0);
     resetRelogioFlag = false;
   }
 
@@ -328,12 +304,10 @@ void loop() {
      counter = 0;
   }
 
+  delay(0);
   checkClientConected(counter);
   
   delay(500); 
 }
-
-
-
 
 
