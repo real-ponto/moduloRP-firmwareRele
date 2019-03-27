@@ -37,15 +37,16 @@ bool shouldResetRelogio = false;
 // variaveis de tempo
 unsigned long timeLast          = 0;
 unsigned long timeConnected     = 0;   //total
-unsigned long timeDisconected   = 0; //total
 
-unsigned int amostragemDisconnect  = 0;
+int ping_ms = 0;
+
+int lossConnection = 0;
 
 void setup() {
 
   Serial.begin(115200);
 
-  Serial.println("inicializate");
+  Serial.println("\n\ninicializate");
 
   pinMode(releRelogio, OUTPUT);
   pinMode(releModulo, OUTPUT);
@@ -90,16 +91,13 @@ void checkConnection() {
 
   Serial.println("verify connection");
 
-  bool online = Ping.ping(google);
+  bool online = Ping.ping(google,2);
+  ping_ms = Ping.averageTime();
   
   if (online){
     
     if (beforeStateOnline){
       timeConnected += (millis()/60000) - timeLast;
-    }
-    
-    else {
-      timeDisconected += (millis()/60000) - timeLast;
     }
    
     timeLast = millis()/60000;
@@ -118,13 +116,8 @@ void checkConnection() {
        
     if (beforeStateOnline){
       timeConnected += (millis()/60000) - timeLast;
-      amostragemDisconnect += 1;
     }
-    
-    else {
-      timeDisconected += (millis()/60000) - timeLast;
-    }
-   
+
     timeLast = millis()/60000;
     
     beforeStateOnline = false;
@@ -149,6 +142,8 @@ void checkConnection() {
           Serial.println("try reconnect");
 
           reconnect = Ping.ping(google);
+
+
       
           delay (100);
 
@@ -226,9 +221,6 @@ void checkClientConected (int counter) {
       timeConnected += (millis()/60000) - timeLast;
     }
     
-    else {
-      timeDisconected += (millis()/60000) - timeLast;
-    }
     
     timeLast = millis()/60000;
 
@@ -257,25 +249,26 @@ void checkClientConected (int counter) {
 
     client.print(String(timeConnected, DEC));
     client.print(";");
+    
+    client.print(String(lossConnection, DEC));
+    client.print(";");
+    
+    client.print(String(ping_ms, DEC));
+    client.print(";");
 
-    client.print(String(timeDisconected, DEC));
+    client.print("v1.01");
     client.print(";");
-    
-    client.print(String(amostragemDisconnect, DEC));
-    client.print(";");
-    
+
     client.println("");
   
     
     delay(1); //INTERVALO DE 1 MILISSEGUNDO
   } 
-  else {
-    client.println("HTTP/1.1 404 Not Found");
-  }
 }
 
 // Desliga a energia do relógio por 15 segundos. 
 void resetRelogio () {
+  
   Serial.println("f: reseting Relogio");
 
   digitalWrite(releRelogio, LOW);
@@ -284,6 +277,7 @@ void resetRelogio () {
 }
 
 void resetModulo () {
+  lossConnection += 1;
   Serial.println("f: reseting Modulo");
 
   digitalWrite(releModulo, LOW);
@@ -302,7 +296,7 @@ void loop() {
   shouldResetRelogio = resetRelogioFlag;
   
   counter = counter + 1;
-  if (counter > 600) {
+  if (counter > 900) {
       Serial.println(millis()/60000);
       checkConnection();
       counter = 0;
