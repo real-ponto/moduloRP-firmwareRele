@@ -39,7 +39,6 @@ unsigned long timeLast          = 0;
 unsigned long timeConnected     = 0;   //total
 unsigned long timeDisconected   = 0; //total
 
-unsigned int amostragemConnected   = 1;
 unsigned int amostragemDisconnect  = 0;
 
 void setup() {
@@ -95,25 +94,23 @@ void checkConnection() {
   
   if (online){
     
-   
-
     if (beforeStateOnline){
       timeConnected += (millis()/60000) - timeLast;
     }
     
     else {
       timeDisconected += (millis()/60000) - timeLast;
-      amostragemConnected += 1;
     }
    
     timeLast = millis()/60000;
 
-    
     beforeStateOnline = true;
     
     Serial.println("online");
+
     counterTimeWithoutConnection = 0;
     digitalWrite(ledAzul, LOW);
+
     return;
   }
  
@@ -137,7 +134,9 @@ void checkConnection() {
     if (counterTimeWithoutConnection > timeWithoutConnection) {
       
       reseting:
-      
+
+      Serial.println("Reseting");
+
       resetModulo();
       
       counterTimeWithoutConnection = 0;
@@ -155,7 +154,7 @@ void checkConnection() {
 
           couterTryReconect = couterTryReconect + 1;
           
-          if (couterTryReconect >= 9000) {
+          if (couterTryReconect >= 120) {
             goto reseting;
           }
         }
@@ -165,11 +164,13 @@ void checkConnection() {
       }
 
     counterTimeWithoutConnection = counterTimeWithoutConnection + 1;
+
     digitalWrite(ledAzul, HIGH);
     delay(100);
     digitalWrite(ledAzul, LOW);
     delay(200);
     digitalWrite(ledAzul, HIGH);
+
     checkConnection();
   }
 }
@@ -188,7 +189,7 @@ void checkClientConected (int counter) {
   // se não tem cliente destrava o codigo
   if (!client) { 
     return; 
-   }
+  }
   
   Serial.println("");
   Serial.println("client connected");
@@ -225,7 +226,6 @@ void checkClientConected (int counter) {
     
     else {
       timeDisconected += (millis()/60000) - timeLast;
-      amostragemConnected += 1;
     }
     
     timeLast = millis()/60000;
@@ -267,24 +267,25 @@ void checkClientConected (int counter) {
     
     delay(1); //INTERVALO DE 1 MILISSEGUNDO
   } 
-//  else {
-//    client.println("HTTP/1.1 404 Not Found");
-//  }
-  
+  else {
+    client.println("HTTP/1.1 404 Not Found");
+  }
 }
 
-// Desliga a energia do relógio por 7 segundos. 
+// Desliga a energia do relógio por 15 segundos. 
 void resetRelogio () {
+  Serial.println("f: reseting Relogio");
 
   digitalWrite(releRelogio, LOW);
-  delay(7000);
+  delay(15000);
   digitalWrite(releRelogio, HIGH);
 }
 
 void resetModulo () {
+  Serial.println("f: reseting Modulo");
 
   digitalWrite(releModulo, LOW);
-  delay(7000);
+  delay(15000);
   digitalWrite(releModulo, HIGH);
 }
 
@@ -300,11 +301,13 @@ void loop() {
   
   counter = counter + 1;
   if (counter > 600) {
-     checkConnection();
-     counter = 0;
+      Serial.println("millis()/60000");
+      checkConnection();
+      counter = 0;
   }
 
   delay(0);
+
   checkClientConected(counter);
   
   delay(500); 
