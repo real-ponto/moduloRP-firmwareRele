@@ -155,6 +155,8 @@ void checkConnection() {
           couterTryReconect = couterTryReconect + 1;
           
           if (couterTryReconect >= 120) {
+            Serial.println(millis()/60000);
+            Serial.println("goto worked");
             goto reseting;
           }
         }
@@ -301,7 +303,7 @@ void loop() {
   
   counter = counter + 1;
   if (counter > 600) {
-      Serial.println("millis()/60000");
+      Serial.println(millis()/60000);
       checkConnection();
       counter = 0;
   }
