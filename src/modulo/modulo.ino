@@ -1,3 +1,7 @@
+/* Este Firmware foi desenvolvido por Joannis Basile. 
+Todos os direitos estão em posse da real ponto. 
+fone: 4332-4040 */
+
 #include <ESP8266WiFi.h>
 #include <ESP8266Ping.h>
 
@@ -280,7 +284,7 @@ void checkClientConected (int counter) {
     client.println("Content-Type: application/json");
     client.println("Connection: close"); 
     
-        client.println();
+    client.println();
 
     delay(0);
   
