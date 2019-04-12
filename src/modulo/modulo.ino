@@ -1,6 +1,6 @@
-/* Este Firmware foi desenvolvido por Joannis Basile. 
+/* Este Firmware foi desenvolvido por Joannis Basile e Guilherme Stain.
 Todos os direitos estão em posse da real ponto. 
-fone: 4332-4040 */
+qualquer duvida entrar em contato 11 4332-4040 */
 
 #include <ESP8266WiFi.h>
 #include <ESP8266Ping.h>
