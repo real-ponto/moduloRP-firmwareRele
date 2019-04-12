@@ -2,7 +2,7 @@
 #include <ESP8266Ping.h>
 
 // Configuracao WIFI
-const char* ssid      = "realponto";
+const char* ssid      = "realpontomodrp";
 const char* password  = "real#%ponto#rp177";
 
 // Congigurar dhcp para não entrar no lugar do relogio.
@@ -11,7 +11,7 @@ IPAddress gateway(177,177,0,100);
 IPAddress subnet(255,255,255,0); 
 
 // Porta do servidor para a requisicao de reset relogio
-WiFiServer server(4000);
+WiFiServer server(4560);
 
 IPAddress google(8,8,8,8);
 
@@ -23,7 +23,7 @@ const int releModulo  = 5;
 const int ledAzul = 13;  // acionamento invertido, low liga high desliga
 
 // variaveis logicas
-const int timeWithoutConnection   = 30;
+const int timeWithoutConnection   = 60;
 int counterTimeWithoutConnection  = 0;
 
 int counter = 0;
@@ -33,6 +33,9 @@ int counterLessConnection = 0;
 bool beforeStateOnline  = true;
 bool resetRelogioFlag   = false;
 bool shouldResetRelogio = false;
+
+bool autoRebootFlag = false;
+bool shouldAutoReboot = false;
 
 // variaveis de tempo
 unsigned long timeLast          = 0;
@@ -141,7 +144,7 @@ void checkConnection() {
         while (!reconnect) {
           Serial.println("try reconnect");
 
-          reconnect = Ping.ping(google);
+          reconnect = Ping.ping(google, 1);
 
 
       
@@ -149,7 +152,7 @@ void checkConnection() {
 
           couterTryReconect = couterTryReconect + 1;
           
-          if (couterTryReconect >= 120) {
+          if (couterTryReconect >= 600) {
             Serial.println(millis()/60000);
             Serial.println("goto worked");
             goto reseting;
@@ -167,15 +170,13 @@ void checkConnection() {
     digitalWrite(ledAzul, LOW);
     delay(200);
     digitalWrite(ledAzul, HIGH);
-
-    checkConnection();
   }
 }
 
 // analisa a requisicao e executa a tarefa
 void checkClientConected (int counter) {
 
-  if (counter % 50 == 0) {
+  if (counter % 10 == 0) {
     Serial.println();
   }
   
@@ -212,6 +213,10 @@ void checkClientConected (int counter) {
     client.println(response);
     client.flush();
     delay(0);
+
+    delay(1000);
+    
+    WiFiClient client = server.available();
     
     resetRelogioFlag = true;
 
@@ -263,9 +268,35 @@ void checkClientConected (int counter) {
   
     
     delay(1); //INTERVALO DE 1 MILISSEGUNDO
+  }else if (request.indexOf("/masterReboot") != -1)  { 
+
+    Serial.print("workTime: ");
+    Serial.print(String((millis()/60000), DEC));
+    Serial.println(" minutes.");
+
+    client.println("HTTP/1.1 200 OK");
+    client.println("Access-Control-Allow-Origin: *");
+    client.println("Access-Control-Allow-Methods: GET");
+    client.println("Content-Type: application/json");
+    client.println("Connection: close"); 
+    
+        client.println();
+
+    delay(0);
+  
+    String response = "{\n\"Response\": \"reboot\" }";
+    
+    client.println(response);
+    client.flush();
+  
+    delay(1); //INTERVALO DE 1 MILISSEGUNDO
+
+    autoRebootFlag = true;
   } 
 }
-
+void autoReboot() {
+  ESP.restart();
+}
 // Desliga a energia do relógio por 15 segundos. 
 void resetRelogio () {
   
@@ -293,10 +324,18 @@ void loop() {
     resetRelogioFlag = false;
   }
 
+  if (shouldAutoReboot){
+    autoReboot();
+    delay(0);
+    autoRebootFlag = false;
+  }
+
   shouldResetRelogio = resetRelogioFlag;
+  shouldAutoReboot = autoRebootFlag;
   
   counter = counter + 1;
-  if (counter > 900) {
+  Serial.print(counter);
+  if (counter > 800) {
       Serial.println(millis()/60000);
       checkConnection();
       counter = 0;
@@ -306,7 +345,7 @@ void loop() {
 
   checkClientConected(counter);
   
-  delay(500); 
+  delay(1000); 
 }
 
 
