@@ -174,6 +174,7 @@ void checkConnection() {
     digitalWrite(ledAzul, LOW);
     delay(200);
     digitalWrite(ledAzul, HIGH);
+    checkConnection();
   }
 }
 
