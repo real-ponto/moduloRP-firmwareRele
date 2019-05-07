@@ -254,7 +254,7 @@ void checkClientConected (int counter) {
     client.print(String(ping_ms, DEC));
     client.print(";");
 
-    client.print("v1.01");
+    client.print("v1.02");
     client.print(";");
 
     client.println("");
