@@ -6,7 +6,7 @@ qualquer duvida entrar em contato 11 4332-4040 */
 #include <ESP8266Ping.h>
 
 // Configuracao WIFI
-const char* ssid      = "realpontomodrp";
+const char* ssid      = "realpontomodrp330";
 const char* password  = "real#%ponto#rp177";
 
 // Congigurar dhcp para não entrar no lugar do relogio.
@@ -27,8 +27,9 @@ const int releModulo  = 5;
 const int ledAzul = 13;  // acionamento invertido, low liga high desliga
 
 // variaveis logicas
-const int timeWithoutConnection   = 60;
+const int timeWithoutConnection   = 500;
 int counterTimeWithoutConnection  = 0;
+int counterWithoutConnection = 0;
 
 int counter = 0;
 
@@ -95,32 +96,13 @@ void setup() {
 }
 
 void checkConnection() {
-
   Serial.println("verify connection");
-
-  bool online = Ping.ping(google,2);
-  ping_ms = Ping.averageTime();
   
-  if (online){
-    
-    if (beforeStateOnline){
-      timeConnected += (millis()/60000) - timeLast;
-    }
-   
-    timeLast = millis()/60000;
+  bool online = Ping.ping(google,1);
+  ping_ms = Ping.averageTime();
 
-    beforeStateOnline = true;
-    
-    Serial.println("online");
-
-    counterTimeWithoutConnection = 0;
-    digitalWrite(ledAzul, LOW);
-
-    return;
-  }
- 
-  else {
-       
+  while(!online) {
+    counterWithoutConnection += 1;
     if (beforeStateOnline){
       timeConnected += (millis()/60000) - timeLast;
     }
@@ -130,43 +112,30 @@ void checkConnection() {
     beforeStateOnline = false;
    
     Serial.println("offline");
+    delay(700);
 
-    if (counterTimeWithoutConnection > timeWithoutConnection) {
-      
-      reseting:
+    int timeCalc = timeWithoutConnection + (counterWithoutConnection * 100);
+
+    if (timeCalc > 1500) {
+      timeCalc = 1500;
+    }
+
+    if (counterTimeWithoutConnection > timeCalc) {
 
       Serial.println("Reseting");
 
       resetModulo();
+      counterWithoutConnection = counterWithoutConnection  + 1;
       
+      Serial.print("counterWithoutConnection ");
+      Serial.println(String((counterWithoutConnection), DEC));
       counterTimeWithoutConnection = 0;
       
       bool reconnect = false;
       
       int couterTryReconect = 0;
-
-        while (!reconnect) {
-          Serial.println("try reconnect");
-
-          reconnect = Ping.ping(google, 1);
-
-
-      
-          delay (100);
-
-          couterTryReconect = couterTryReconect + 1;
-          
-          if (couterTryReconect >= 600) {
-            Serial.println(millis()/60000);
-            Serial.println("goto worked");
-            goto reseting;
-          }
-        }
-      
-        Serial.println("reconnected");
-        checkConnection();
-      }
-
+    
+    }
     counterTimeWithoutConnection = counterTimeWithoutConnection + 1;
 
     digitalWrite(ledAzul, HIGH);
@@ -174,8 +143,27 @@ void checkConnection() {
     digitalWrite(ledAzul, LOW);
     delay(200);
     digitalWrite(ledAzul, HIGH);
-    checkConnection();
+
+    online = Ping.ping(google,1);
+    ping_ms = Ping.averageTime();
   }
+
+  if (beforeStateOnline){
+    timeConnected += (millis()/60000) - timeLast;
+  }
+
+  timeLast = millis()/60000;
+
+  beforeStateOnline = true;
+
+  
+  counterWithoutConnection = 0;
+  Serial.println("online");
+
+  counterTimeWithoutConnection = 0;
+  digitalWrite(ledAzul, LOW);
+
+  return;
 }
 
 // analisa a requisicao e executa a tarefa
