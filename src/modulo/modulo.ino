@@ -27,7 +27,7 @@ const int releModulo  = 5;
 const int ledAzul = 13;  // acionamento invertido, low liga high desliga
 
 // variaveis logicas
-const int timeWithoutConnection   = 500;
+const int timeWithoutConnection   = 650;
 int counterTimeWithoutConnection  = 0;
 int counterWithoutConnection = 0;
 
@@ -45,6 +45,9 @@ bool shouldAutoReboot = false;
 // variaveis de tempo
 unsigned long timeLast          = 0;
 unsigned long timeConnected     = 0;   //total
+
+unsigned long timeWorked = 0;
+unsigned long timeWorkedAux = 0;
 
 int ping_ms = 0;
 
@@ -90,8 +93,8 @@ void setup() {
   server.begin(); 
   
   Serial.println("server inicialized");
-
-  timeLast = millis()/60000; 
+  conterTimeWorked();
+  timeLast = timeWorked; 
   checkConnection();
 }
 
@@ -102,12 +105,13 @@ void checkConnection() {
   ping_ms = Ping.averageTime();
 
   while(!online) {
-    counterWithoutConnection += 1;
     if (beforeStateOnline){
-      timeConnected += (millis()/60000) - timeLast;
+      conterTimeWorked();
+      timeConnected += timeWorked - timeLast;
     }
 
-    timeLast = millis()/60000;
+    conterTimeWorked();
+    timeLast = timeWorked;
     
     beforeStateOnline = false;
    
@@ -120,6 +124,7 @@ void checkConnection() {
       timeCalc = 1500;
     }
 
+    Serial.println(String((timeCalc), DEC));
     if (counterTimeWithoutConnection > timeCalc) {
 
       Serial.println("Reseting");
@@ -149,10 +154,12 @@ void checkConnection() {
   }
 
   if (beforeStateOnline){
-    timeConnected += (millis()/60000) - timeLast;
+    conterTimeWorked();
+    timeConnected += timeWorked - timeLast;
   }
 
-  timeLast = millis()/60000;
+  conterTimeWorked();
+  timeLast = timeWorked;
 
   beforeStateOnline = true;
 
@@ -216,7 +223,8 @@ void checkClientConected (int counter) {
   } else if (request.indexOf("/getStatus") != -1)  { 
 
     if (beforeStateOnline){
-      timeConnected += (millis()/60000) - timeLast;
+      conterTimeWorked();
+      timeConnected += timeWorked - timeLast;
     }
     
     
@@ -224,9 +232,9 @@ void checkClientConected (int counter) {
 
     beforeStateOnline = true;
 
-      
+    conterTimeWorked();
     Serial.print("workTime: ");
-    Serial.print(String((millis()/60000), DEC));
+    Serial.print(String(timeWorked, DEC));
     Serial.println(" minutes.");
 
     client.println("HTTP/1.1 200 OK");
@@ -241,8 +249,8 @@ void checkClientConected (int counter) {
 
     delay(0);
     
-
-    client.print(String((millis()/60000), DEC));
+    conterTimeWorked();
+    client.print(String(timeWorked, DEC));
     client.print(";");
 
     client.print(String(timeConnected, DEC));
@@ -262,9 +270,9 @@ void checkClientConected (int counter) {
     
     delay(1); //INTERVALO DE 1 MILISSEGUNDO
   }else if (request.indexOf("/masterReboot") != -1)  { 
-
+    conterTimeWorked();
     Serial.print("workTime: ");
-    Serial.print(String((millis()/60000), DEC));
+    Serial.print(String(timeWorked, DEC));
     Serial.println(" minutes.");
 
     client.println("HTTP/1.1 200 OK");
@@ -309,6 +317,17 @@ void resetModulo () {
   digitalWrite(releModulo, HIGH);
 }
 
+void conterTimeWorked() {
+  if ((millis()/60000) >= timeWorkedAux) {
+    timeWorked += ((millis()/60000) - timeWorkedAux);
+    timeWorkedAux = (millis()/60000);
+  }else {
+    timeWorkedAux = (millis()/60000);
+    timeWorked ++;
+  }
+}
+
+
 void loop() {
 
   if (shouldResetRelogio){
@@ -328,10 +347,11 @@ void loop() {
   
   counter = counter + 1;
   Serial.print(counter);
-  if (counter > 800) {
-      Serial.println(millis()/60000);
-      checkConnection();
-      counter = 0;
+  if (counter > 450) {
+    conterTimeWorked();
+    Serial.println(timeWorked);
+    checkConnection();
+    counter = 0;
   }
 
   delay(0);
