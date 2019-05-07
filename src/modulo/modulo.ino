@@ -6,7 +6,7 @@ qualquer duvida entrar em contato 11 4332-4040 */
 #include <ESP8266Ping.h>
 
 // Configuracao WIFI
-const char* ssid      = "realpontomodrp330";
+const char* ssid      = "realpontomodrp719";
 const char* password  = "real#%ponto#rp177";
 
 // Congigurar dhcp para não entrar no lugar do relogio.
@@ -27,7 +27,7 @@ const int releModulo  = 5;
 const int ledAzul = 13;  // acionamento invertido, low liga high desliga
 
 // variaveis logicas
-const int timeWithoutConnection   = 650;
+const int timeWithoutConnection   = 450;
 int counterTimeWithoutConnection  = 0;
 int counterWithoutConnection = 0;
 
@@ -124,7 +124,10 @@ void checkConnection() {
       timeCalc = 1500;
     }
 
+    Serial.print(String((counterTimeWithoutConnection), DEC));
+    Serial.print(" > ");
     Serial.println(String((timeCalc), DEC));
+
     if (counterTimeWithoutConnection > timeCalc) {
 
       Serial.println("Reseting");
@@ -347,9 +350,13 @@ void loop() {
   
   counter = counter + 1;
   Serial.print(counter);
-  if (counter > 450) {
+  if (counter > 600) {
     conterTimeWorked();
+    
+    Serial.println();
     Serial.println(timeWorked);
+
+    counterTimeWithoutConnection = 400;
     checkConnection();
     counter = 0;
   }
