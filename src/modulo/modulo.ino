@@ -6,7 +6,7 @@ qualquer duvida entrar em contato 11 4332-4040 */
 #include <ESP8266Ping.h>
 
 // Configuracao WIFI
-const char* ssid      = "realpontomodrp719";
+const char* ssid      = "realpontomodrp000";
 const char* password  = "real#%ponto#rp177";
 
 // Congigurar dhcp para não entrar no lugar do relogio.
@@ -20,8 +20,8 @@ WiFiServer server(4560);
 IPAddress google(8,8,8,8);
 
 // Configuracao Reles
-const int releRelogio = 12;  
-const int releModulo  = 5;
+const int releRelogio = 5;  
+const int releModulo  = 12;
 
 //Configuracao Led
 const int ledAzul = 13;  // acionamento invertido, low liga high desliga
